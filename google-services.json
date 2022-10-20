@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "248236903942",
+    "project_id": "eventreminder-8fe6b",
+    "storage_bucket": "eventreminder-8fe6b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:248236903942:android:e99123b172a08c93663d87",
+        "android_client_info": {
+          "package_name": "com.example.eventreminder"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "248236903942-8tog49p475ong16epgmm08qd284qfce7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAYJymVMo2NzJs8_8JUsFC8Z6fPQHZytFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "248236903942-8tog49p475ong16epgmm08qd284qfce7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

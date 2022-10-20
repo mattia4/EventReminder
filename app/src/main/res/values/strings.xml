@@ -1,0 +1,23 @@
+<resources>
+    <string name="app_name">EventReminder</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">Today\'s todo</string>
+    <string name="second_fragment_label">New Event</string>
+    <string name="next">Next</string>
+    <string name="previous">Cancel</string>
+    <string name="save">Save</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+    <string name="tv_eventlist_title">Event list</string>
+    <string name="tv_eventlist_new">NEW</string>
+    <string name="tv_todo_name">TODO item</string>
+    <string name="cd_event_description">warning</string>
+    <string name="et_event_title">Insert title</string>
+    <string name="et_event_desc">Insert description</string>
+    <string name="tv_new_event_title">New</string>
+    <string name="im_content_description_back">Back</string>
+    <string name="content_description_horizontal_line">horizontal_line</string>
+    <string name="content_description_calendar">calendar</string>
+</resources>
