@@ -1,28 +1,17 @@
 package com.example.eventreminder
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CalendarView
-import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.eventreminder.adapters.RvEventListAdapter
 import com.example.eventreminder.databinding.FragmentSecondBinding
-import com.example.eventreminder.models.EventReminder
-import com.example.eventreminder.models.EventReminderResponse
 import com.example.eventreminder.models.EventReminderResponseFire
-import com.example.eventreminder.utils.DateUtils
-import com.example.eventreminder.ws.RetrofitClient
 import com.google.firebase.firestore.FirebaseFirestore
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
 import java.time.LocalDateTime
 import java.util.*
 
@@ -36,7 +25,7 @@ class SecondFragment : Fragment() {
     // This property is only valid between onCreateView and
     // onDestroyView.
     private val binding get() = _binding!!
-    private var calendar: Calendar? = Calendar.getInstance()
+    private var calendar: Calendar = Calendar.getInstance()
     private var today: LocalDateTime? = LocalDateTime.now()
     private var fireDb: FirebaseFirestore = FirebaseFirestore.getInstance()
 
@@ -58,19 +47,21 @@ class SecondFragment : Fragment() {
         val tvEventDescription: TextView = view.findViewById(R.id.tv_event_description)
         val cvDate: CalendarView = view.findViewById(R.id.cv_event_date)
 
-        today?.let { calendar?.set(it.year, it.monthValue, it.dayOfMonth) }
+        cvDate.minDate = calendar.timeInMillis
+
+        today?.let { calendar.set(it.year, it.monthValue, it.dayOfMonth) }
 
         cvDate.setOnDateChangeListener { _, year, month, dayOfMonth ->
-            calendar?.set(year, month, dayOfMonth)
+            calendar.set(year, month, dayOfMonth)
         }
 
         binding.btnSave.setOnClickListener {
             val er = EventReminderResponseFire(
+                fireDb.collection("Events").document().id,
                 tvEventName.text.toString(),
                 tvEventDescription.text.toString(),
-                calendar?.time?.toInstant().toString(),
-                false
-            )
+                calendar.time.toInstant().toString(),
+                false)
 
             if (null == er.eventName || er.eventName.isEmpty()) {
                 tvEventName.error = "Event title is missing!"

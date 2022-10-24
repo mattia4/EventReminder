@@ -5,6 +5,10 @@ import com.google.gson.annotations.SerializedName;
 
 public class EventReminderResponseFire {
 
+    @SerializedName("eventId")
+    @Expose
+    private final String EventId;
+
     @SerializedName("eventName")
     @Expose
     private final String EventName;
@@ -21,7 +25,8 @@ public class EventReminderResponseFire {
     @Expose
     private final boolean EventDeleted;
 
-    public EventReminderResponseFire(String eventName, String eventDescription, String eventDate, boolean eventDeleted) {
+    public EventReminderResponseFire(String eventId, String eventName, String eventDescription, String eventDate, boolean eventDeleted) {
+        this.EventId = eventId;
         this.EventName = eventName;
         this.EventDescription = eventDescription;
         this.EventDate = eventDate;
@@ -44,6 +49,10 @@ public class EventReminderResponseFire {
 
     public boolean getEventDeleted() {
         return EventDeleted;
+    }
+
+    public String getEventId() {
+        return EventId;
     }
 }
 
