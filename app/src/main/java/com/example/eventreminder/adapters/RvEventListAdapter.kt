@@ -33,7 +33,10 @@ class RvEventListAdapter(
         val tvEventName: TextView = view.findViewById(R.id.tv_event_name)
         val tvEventDate: TextView = view.findViewById(R.id.tv_event_date)
         val tvEventDescription: TextView = view.findViewById(R.id.tv_event_description)
+        val tvNotifyMe: ImageView = view.findViewById(R.id.iv_notfy_me)
         val ivDelete: ImageView = view.findViewById(R.id.ic_delete)
+        val ivEventHour: ImageView = view.findViewById(R.id.iv_event_hour)
+        val tvEventHour: TextView = view.findViewById(R.id.tv_event_hour)
         var fireDb: FirebaseFirestore = FirebaseFirestore.getInstance()
     }
 
@@ -41,7 +44,7 @@ class RvEventListAdapter(
     override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
         // Create a new view, which defines the UI of the list item
         val view = LayoutInflater.from(viewGroup.context)
-            .inflate(R.layout.row_event_list, viewGroup, false)
+            .inflate(R.layout.rv_event_list_row, viewGroup, false)
 
         return ViewHolder(view)
     }
@@ -58,6 +61,9 @@ class RvEventListAdapter(
         viewHolder.tvEventName.text = currEvent.eventName
         viewHolder.tvEventDate.text = currEvent.eventDate
 
+        if(currEvent.isToNotify) viewHolder.tvNotifyMe.visibility =  View.VISIBLE
+        else viewHolder.tvNotifyMe.visibility =  View.GONE
+
         if (currEvent.eventDescription.isEmpty()) {
             viewHolder.tvEventDescription.visibility = View.GONE
         } else {
@@ -65,18 +71,25 @@ class RvEventListAdapter(
             viewHolder.tvEventDescription.text = currEvent.eventDescription
         }
 
+        if (currEvent.eventHour.isEmpty()) {
+            viewHolder.tvEventHour.visibility = View.GONE
+            viewHolder.ivEventHour.visibility = View.GONE
+        } else {
+            viewHolder.tvEventHour.visibility = View.VISIBLE
+            viewHolder.ivEventHour.visibility = View.VISIBLE
+            viewHolder.tvEventHour.text = currEvent.eventHour
+        }
         viewHolder.ivDelete.setOnClickListener {
             AlertDialog.Builder(context)
                 .setMessage(R.string.dialog_message)
                 .setTitle(R.string.dialog_title)
                 .setCancelable(false)
-                .setPositiveButton("Yes", DialogInterface.OnClickListener { dialog, id ->
+                .setPositiveButton("Yes", DialogInterface.OnClickListener { _, _ ->
 
                     viewHolder.fireDb.collection("Events").get()
                         .addOnCompleteListener(OnCompleteListener<QuerySnapshot?> { task ->
                             if (task.isSuccessful) {
                                 for (document in task.result) {
-                                    // list.add(document.id)
                                     val selectedEventId: String = currEvent.eventId
                                     if (document.data.getValue("eventId") == selectedEventId) {
                                         viewHolder.fireDb.collection("Events").document(document.id)
@@ -87,7 +100,7 @@ class RvEventListAdapter(
 
                                 Toast.makeText(context, "Event deleted successfully", Toast.LENGTH_LONG).show()
                             } else {
-                                Toast.makeText(context, "An error has occured", Toast.LENGTH_LONG).show()
+                                Toast.makeText(context, "An error has occurred", Toast.LENGTH_LONG).show()
                             }
                         })
                 })

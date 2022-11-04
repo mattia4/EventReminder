@@ -26,7 +26,7 @@
             android:id="@+id/tv_event_name"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0.5"
+            android:layout_weight="0.3"
             android:gravity="center_vertical"
             android:text="@string/tv_todo_name"
             android:textStyle="bold"
@@ -46,6 +46,13 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <ImageView
+            android:id="@+id/iv_notfy_me"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginStart="5dp"
+            android:background="@drawable/ic_notifications_active"
+            android:visibility="gone" />
+        <ImageView
             android:id="@+id/ic_delete"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -63,7 +70,27 @@
             android:id="@+id/tv_event_description"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:layout_weight="0.7" />
+
+        <TextView
+            android:id="@+id/tv_event_hour"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="5dp"
+            android:layout_weight="0.1"
+            android:alpha="0.5"
+            android:layout_gravity="center_vertical"
+            android:gravity="center_horizontal|end"
+            android:textStyle="bold|italic" />
+
+        <ImageView
+            android:visibility="gone"
+            android:id="@+id/iv_event_hour"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="0.5"
+            android:background="@drawable/ic_timer"
+            android:contentDescription="@string/iv_time_notification_content_description" />
     </LinearLayout>
 
 
