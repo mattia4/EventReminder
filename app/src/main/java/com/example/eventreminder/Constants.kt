@@ -8,6 +8,7 @@ class Constants {
         const val SHORT_HAPTIC_FEEDBACK_DURATION: Long = 200L
 
         const val NOTIFY_CHANNEL_ID = "counter_channel"
+        const val USER_UID = "uid"
 
     }
 }

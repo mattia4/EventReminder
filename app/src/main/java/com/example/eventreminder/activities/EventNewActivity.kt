@@ -1,59 +1,54 @@
-package com.example.eventreminder
+package com.example.eventreminder.activities
 
 import android.app.TimePickerDialog
+import android.content.Intent
 import android.os.Bundle
 import android.view.HapticFeedbackConstants
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import android.widget.*
-import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
-import com.example.eventreminder.databinding.EventNewFragmentBinding
+import androidx.appcompat.app.AppCompatActivity
+import com.example.eventreminder.Constants.Companion.USER_UID
+import com.example.eventreminder.R
+import com.example.eventreminder.databinding.EventNewActivityBinding
 import com.example.eventreminder.models.EventReminderResponseFire
 import com.google.firebase.firestore.FirebaseFirestore
 import java.util.*
-import java.util.Calendar.getInstance
 
-/**
- * A simple [Fragment] subclass as the second destination in the navigation.
- */
-class EventNewFragment : Fragment() {
-
-    private var _binding: EventNewFragmentBinding? = null
+class EventNewActivity  : AppCompatActivity() {
+    private lateinit var binding: EventNewActivityBinding
 
     // This property is only valid between onCreateView and
     // onDestroyView.
-    private val binding get() = _binding!!
     private var calendar: Calendar = GregorianCalendar()
-    private var todayCal: Calendar = getInstance()
+    private var todayCal: Calendar = Calendar.getInstance()
     private var fireDb: FirebaseFirestore = FirebaseFirestore.getInstance()
     private var eventHour = ""
     private var hour = 0
     private var minute = 0
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
+    private var userUID: String = ""
 
-        _binding = EventNewFragmentBinding.inflate(inflater, container, false)
-        return binding.root
 
-    }
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-        val tvEventName: TextView = view.findViewById(R.id.tv_event_title)
-        val tvEventDescription: TextView = view.findViewById(R.id.tv_event_description)
-        val cvDate: DatePicker = view.findViewById(R.id.cv_event_date)
-        val cvCheckbox: CheckBox = view.findViewById(R.id.cb_checkbox)
-        val tvCheckbox: LinearLayout = view.findViewById(R.id.ll_checkbox)
-        val cvSetTime: LinearLayout = view.findViewById(R.id.cv_set_time)
-        val tvTimeTitle: TextView = view.findViewById(R.id.tv_time_title)
+        binding = EventNewActivityBinding.inflate(layoutInflater)
+        setContentView(R.layout.event_new_activity)
+
+
+        val etEventName: EditText = findViewById(R.id.tv_event_title)
+        val tvEventDescription: TextView = findViewById(R.id.tv_event_description)
+        val cvDate: DatePicker = findViewById(R.id.cv_event_date)
+        val cvCheckbox: CheckBox = findViewById(R.id.cb_checkbox)
+        val tvCheckbox: LinearLayout = findViewById(R.id.ll_checkbox)
+        val cvSetTime: LinearLayout = findViewById(R.id.cv_set_time)
+        val tvTimeTitle: TextView = findViewById(R.id.tv_time_title)
         // val df = SimpleDateFormat("dd-MM-yyyy")
         // val formattedDate: String = df.format(todayCal.time)
 
+        val userUid: String? = intent.getStringExtra(USER_UID)
+        if (userUid != null) {
+            userUID = userUid
+        }
         cvDate.minDate = calendar.timeInMillis
         calendar.set(todayCal.get(Calendar.YEAR), todayCal.get(Calendar.MONTH)+1, todayCal.get(Calendar.DAY_OF_MONTH))
 
@@ -76,8 +71,7 @@ class EventNewFragment : Fragment() {
         }
 
         cvSetTime.setOnClickListener {
-            val mTimePicker = TimePickerDialog(view.context,
-                { _, selectedHour, selectedMinute ->
+            val mTimePicker = TimePickerDialog(this, { _, selectedHour, selectedMinute ->
                     tvTimeTitle.text = String.format("%s:%s",
                         if(selectedHour<10) "0$selectedHour" else "$selectedHour",
                         if(selectedMinute<10) "0$selectedMinute" else "$selectedMinute")
@@ -85,6 +79,7 @@ class EventNewFragment : Fragment() {
                         if(selectedHour<10) "0$selectedHour" else "$selectedHour",
                         if(selectedMinute<10) "0$selectedMinute" else "$selectedMinute")
                 }, hour, minute, true)
+
             it.isHapticFeedbackEnabled = true
             it.performHapticFeedback(HapticFeedbackConstants.CONTEXT_CLICK)
             mTimePicker.setTitle("Select Time")
@@ -104,15 +99,16 @@ class EventNewFragment : Fragment() {
         binding.btnSave.setOnClickListener {
             val er = EventReminderResponseFire(
                 fireDb.collection("Events").document().id,
-                tvEventName.text.toString(),
+                binding.tvEventTitle.text.toString(),
                 tvEventDescription.text.toString(),
                 date,
                 false,
                 cvCheckbox.isChecked,
-                eventHour)
+                eventHour,
+                userUID)
 
             if (null == er.eventName || er.eventName.isEmpty()) {
-                tvEventName.error = "Event title is missing!"
+                binding.tvEventTitle.error = "Event title is missing!"
                 return@setOnClickListener
             }
 
@@ -121,11 +117,13 @@ class EventNewFragment : Fragment() {
                 if (it.isSuccessful && null != it.result) {
                     fireDb.collection("Events").add(er)
                         .addOnSuccessListener {
-                            Toast.makeText(context, "Event added successfully", Toast.LENGTH_SHORT).show()
-                            findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
+                            Toast.makeText(this, "Event added successfully", Toast.LENGTH_SHORT).show()
+                            // findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
+                            val i = Intent(this, EventListActivity::class.java)
+                            startActivity(i)
                         }
                         .addOnFailureListener {
-                            Toast.makeText(context, "Event failed to add", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this, "Event failed to add", Toast.LENGTH_SHORT).show()
                         }
                 }
             }
@@ -167,10 +165,5 @@ class EventNewFragment : Fragment() {
                 }
             })
         }*/
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
     }
 }

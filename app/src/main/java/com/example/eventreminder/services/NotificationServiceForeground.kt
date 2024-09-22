@@ -1,6 +1,9 @@
 package com.example.eventreminder.services
 
-import android.app.*
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -57,14 +60,14 @@ class NotificationServiceForeground : Service() {
         val notificationIntent = Intent(this, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(
             this,
-            1, notificationIntent, 0
-        )
+            1, notificationIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("Notifications service")
             .setContentText(input)
             .setSmallIcon(R.drawable.ic_notification_add)
             .setContentIntent(pendingIntent)
+            .addAction(R.drawable.ic_arrow_back_24, "Close service", pendingIntent)
             .build()
         startForeground(1, notification)
 

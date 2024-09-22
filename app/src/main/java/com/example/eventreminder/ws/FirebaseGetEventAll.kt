@@ -5,14 +5,21 @@ import android.os.SystemClock
 import android.widget.Toast
 import com.example.eventreminder.services.NotificationService
 import com.example.eventreminder.utils.DateUtils
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
 import java.time.LocalDate
 import java.util.*
 
 class FirebaseGetEventAll {
     private var fireDb: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val user = Firebase.auth.currentUser
+    private var currentUserUid = ""
 
     fun getDataForNotification(context: Context?) {
+        user?.let {
+            currentUserUid = user.uid
+        }
         fireDb.collection("Events").get().addOnCompleteListener {
 
             if (it.isSuccessful && null != it.result) {
@@ -24,12 +31,13 @@ class FirebaseGetEventAll {
                     var eventDay = ""
 
                     if (ev.data.getValue("eventDate") !is String) {
-                        val timestamp: com.google.firebase.Timestamp = ev.data.getValue("eventDate") as com.google.firebase.Timestamp
+                        val timestamp: com.google.firebase.Timestamp =
+                            ev.data.getValue("eventDate") as com.google.firebase.Timestamp
                         dateFormatted = DateUtils().getDateString(timestamp.seconds, "d/M/y")
                     } else {
                         dateFormatted = ev.data.getValue("eventDate") as String
                         val dateParts: List<String> = dateFormatted.split("/")
-                        eventYear= dateParts[2]
+                        eventYear = dateParts[2]
                         eventMonth = dateParts[1]
                         eventDay = dateParts[0]
                         dateFormatted = String.format("%s/%s/%s", eventDay, eventMonth, eventYear)
@@ -38,7 +46,7 @@ class FirebaseGetEventAll {
                     var hourParts: List<String>
                     var hour = 0
                     var minute = 0
-                    if(eventHour.isNotEmpty()) {
+                    if (eventHour.isNotEmpty()) {
                         hourParts = eventHour.split(":")
                         hour = hourParts[0].toInt()
                         minute = hourParts[1].toInt()
@@ -59,9 +67,16 @@ class FirebaseGetEventAll {
                         val description: String = ev.data.getValue("eventDescription") as String
                         val notifyMe: Boolean = ev.data.getValue("isToNotify") as Boolean
                         val eventId: String = ev.data.getValue("eventId") as String
+                        val userUid: String = ev.data.getValue("userUid") as String
 
-                        if(notifyMe && currHour == hour && currMinutes >= minute-5 && currMinutes <= minute) {
-                            NotificationService(context).showMultipleNotificationBigText(title, description, idNotification, "test")
+                        if (notifyMe && currHour == hour && currMinutes >= minute - 5 && currMinutes <= minute &&
+                            currentUserUid == userUid) {
+                            NotificationService(context).showMultipleNotificationBigText(
+                                title,
+                                description,
+                                idNotification,
+                                "test"
+                            )
                             FireBaseEventDocumentUpdate().fireEventUpdate(context, eventId)
                         }
                         idNotification++

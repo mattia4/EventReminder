@@ -11,20 +11,23 @@ import android.media.RingtoneManager
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
+import android.speech.tts.TextToSpeech
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.DEFAULT_LIGHTS
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.eventreminder.Constants.Companion.HAPTIC_FEEDBACK_DURATION
 import com.example.eventreminder.Constants.Companion.NOTIFY_CHANNEL_ID
 import com.example.eventreminder.Constants.Companion.SHORT_HAPTIC_FEEDBACK_DURATION
-import com.example.eventreminder.EventListFragment
 import com.example.eventreminder.R
+import com.example.eventreminder.activities.EventListActivity
 import com.example.eventreminder.activities.MainActivity
+import java.util.*
 import java.util.concurrent.TimeUnit
 
 
 class NotificationService (private val context: Context?) {
     private val notificationManager = context?.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    private var tts: TextToSpeech? = null
 
     fun showNotification(title: String, description: String) {
         val activityIntent = Intent(context, MainActivity::class.java)
@@ -91,7 +94,7 @@ class NotificationService (private val context: Context?) {
 
     fun showMultipleNotificationBigText(title: String, description: String, idNotification: Int, group: String) {
         var mBuilder = NotificationCompat.Builder(context!!.applicationContext, "notify")
-        val ii = Intent(context.applicationContext, EventListFragment::class.java)
+        val ii = Intent(context.applicationContext, EventListActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(context, 2, ii, 0)
 
         val bigText = NotificationCompat.BigTextStyle()
@@ -129,5 +132,9 @@ class NotificationService (private val context: Context?) {
             vibrator?.vibrate(TimeUnit.MILLISECONDS.toMillis(SHORT_HAPTIC_FEEDBACK_DURATION))
         }
         mNotificationManager.notify(idNotification, mBuilder.build())
+        tts = TextToSpeech(context, TextToSpeech.OnInitListener {
+            tts?.language = Locale.ITALIAN
+            tts?.speak(description, TextToSpeech.QUEUE_FLUSH, null);
+        })
     }
 }

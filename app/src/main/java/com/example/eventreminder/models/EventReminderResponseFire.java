@@ -33,13 +33,18 @@ public class EventReminderResponseFire {
     @Expose
     private final String EventHour;
 
+    @SerializedName("userUid")
+    @Expose
+    private final String UserUid;
+
     public EventReminderResponseFire(String eventId,
                                      String eventName,
                                      String eventDescription,
                                      String eventDate,
                                      boolean eventDeleted,
                                      boolean isToNotify,
-                                     String eventHour) {
+                                     String eventHour,
+                                     String userUid) {
         this.EventId = eventId;
         this.EventName = eventName;
         this.EventDescription = eventDescription;
@@ -47,6 +52,7 @@ public class EventReminderResponseFire {
         this.EventDeleted = eventDeleted;
         this.IsToNotify = isToNotify;
         this.EventHour = eventHour;
+        this.UserUid = userUid;
     }
 
 
@@ -77,6 +83,9 @@ public class EventReminderResponseFire {
 
     public String getEventHour() {
         return EventHour;
+    }
+    public String getUserUid() {
+        return UserUid;
     }
 }
 

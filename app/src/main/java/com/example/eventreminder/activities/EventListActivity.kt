@@ -1,88 +1,89 @@
-package com.example.eventreminder
+package com.example.eventreminder.activities
 
-import android.content.ContentValues.TAG
-import android.os.*
+import android.content.ContentValues
+import android.content.DialogInterface
+import android.content.Intent
+import android.os.Bundle
+import android.speech.tts.TextToSpeech
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.ProgressBar
 import android.widget.TextView
-import androidx.fragment.app.Fragment
-import androidx.navigation.fragment.findNavController
+import androidx.appcompat.app.AlertDialog
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
+import com.example.eventreminder.Constants.Companion.USER_UID
+import com.example.eventreminder.R
 import com.example.eventreminder.adapters.RvEventListAdapter
-import com.example.eventreminder.databinding.EventListFragmentBinding
+import com.example.eventreminder.adapters.RvEventListAdapter.OnItemClick
+import com.example.eventreminder.databinding.EventListActivityBinding
 import com.example.eventreminder.models.EventReminderResponseFire
 import com.example.eventreminder.services.NotificationServiceForeground
 import com.example.eventreminder.utils.DateUtils
-import com.example.eventreminder.ws.FireBaseEventDocumentUpdate
 import com.google.android.gms.tasks.OnCompleteListener
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.util.*
+import kotlin.collections.ArrayList
 
+private lateinit var binding: EventListActivityBinding
 
-/**
- * A simple [Fragment] subclass as the default destination in the navigation.
- */
-class EventListFragment : Fragment(), RvEventListAdapter.OnItemClick {
+// TODO su home calendario per scegliere giorno eventi + lista eventi di quel giorno
+// TODO eventuale dettaglio + modifica riga evento
+// TODO avviso vocale di eventi
 
-    // TODO su home calendario per scegliere giorno eventi + lista eventi di quel giorno
-    // TODO eventuale dettaglio + modifica riga evento
-    private var _binding: EventListFragmentBinding? = null
-    private var today: LocalDateTime? = LocalDateTime.now()
-    private var fireDb: FirebaseFirestore = FirebaseFirestore.getInstance()
-    private val eventReminders: ArrayList<EventReminderResponseFire> = ArrayList()
-    private var adapter: RvEventListAdapter? = null
+private var today: LocalDateTime? = LocalDateTime.now()
+private var fireDb: FirebaseFirestore = FirebaseFirestore.getInstance()
+private val eventReminders: ArrayList<EventReminderResponseFire> = ArrayList()
+private var adapter: RvEventListAdapter? = null
+private var currentUserUID: String = ""
+private var tts: TextToSpeech? = null
 
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
+class EventListActivity : AppCompatActivity(), OnItemClick {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.event_list_activity)
 
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View {
-        _binding = EventListFragmentBinding.inflate(inflater, container, false)
-        return binding.root
+        binding = EventListActivityBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-    }
+        val userUid: String? = intent.getStringExtra(USER_UID)
+        if (userUid != null)
+            currentUserUID = userUid
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
-
-        NotificationServiceForeground.startService(context!!, "Notification service is running...")
+        NotificationServiceForeground.startService(this, "Notification service is running...")
         // NotificationServiceForeground.stopService(context!!)
         // val saveRequest = PeriodicWorkRequestBuilder<UploadWorker>(1, TimeUnit.MINUTES).build()
         // WorkManager.getInstance(context!!).enqueue(saveRequest)
 
-        val tvDay: TextView = view.findViewById(R.id.tv_day)
-        val tvDayName: TextView = view.findViewById(R.id.tv_day_name)
-        val rvTodoList: RecyclerView = view.findViewById(R.id.rv_todo_list)
-        val llTodoList: SwipeRefreshLayout = view.findViewById(R.id.ll_todo_list)
-        val pbLoadingBar: ProgressBar = view.findViewById(R.id.pb_loading_bar)
+        val tvDay: TextView = findViewById(R.id.tv_day)
+        val tvDayName: TextView = findViewById(R.id.tv_day_name)
+        val rvTodoList: RecyclerView = findViewById(R.id.rv_todo_list)
+        val llTodoList: SwipeRefreshLayout = findViewById(R.id.ll_todo_list)
+        val pbLoadingBar: ProgressBar = findViewById(R.id.pb_loading_bar)
 
         tvDay.text = today?.format(DateTimeFormatter.ofPattern("d"))
         tvDayName.text = LocalDate.now().dayOfWeek.name
 
-        llTodoList.setOnRefreshListener(OnRefreshListener {
-            activity?.window?.setFlags(
+        llTodoList.setOnRefreshListener(SwipeRefreshLayout.OnRefreshListener {
+            this.window?.setFlags(
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE,
                 WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
-            );
+            )
+
             getEventAllFirestore(rvTodoList, null, llTodoList)
         })
 
         binding.tvNew.setOnClickListener {
-            findNavController().navigate(R.id.action_FirstFragment_to_SecondFragment)
+            val i = Intent(this, EventNewActivity::class.java)
+            i.putExtra(USER_UID, currentUserUID)
+            startActivity(i)
         }
         // decommentare sotto se si vuol usare il db locale
         // getEventAll(rvTodoList, pbLoadingBar)
@@ -130,14 +131,14 @@ class EventListFragment : Fragment(), RvEventListAdapter.OnItemClick {
                 }
             })
         }*/
-    private fun firebaseUpdateEventDocument(eventId: String) {
-        FireBaseEventDocumentUpdate().fireEventUpdate(context, eventId)
-    }
+    // private fun firebaseUpdateEventDocument(eventId: String) {
+    //     FireBaseEventDocumentUpdate().fireEventUpdate(context, eventId)
+    // }
 
     private fun firebaseMessaging() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
             if (!task.isSuccessful) {
-                Log.w(TAG, "Fetching FCM registration token failed", task.exception)
+                Log.w(ContentValues.TAG, "Fetching FCM registration token failed", task.exception)
                 return@OnCompleteListener
             }
             // Get new FCM registration token
@@ -153,7 +154,8 @@ class EventListFragment : Fragment(), RvEventListAdapter.OnItemClick {
     private fun getEventAllFirestore(
         rvTodoList: RecyclerView,
         pbLoadingBar: ProgressBar?,
-        llTodoList: SwipeRefreshLayout) {
+        llTodoList: SwipeRefreshLayout
+    ) {
         pbLoadingBar?.visibility = View.VISIBLE
         eventReminders.clear()
         adapter?.notifyDataSetChanged()
@@ -162,9 +164,9 @@ class EventListFragment : Fragment(), RvEventListAdapter.OnItemClick {
 
             if (it.isSuccessful && null != it.result) {
                 for (ev in it.result) {
-                    var dateFormatted = ""
-                    var eventYear = ""
-                    var eventMonth = ""
+                    var dateFormatted: String
+                    var eventYear: String
+                    var eventMonth: String
                     var eventDay = ""
 
                     if (ev.data.getValue("eventDate") !is String) {
@@ -181,7 +183,10 @@ class EventListFragment : Fragment(), RvEventListAdapter.OnItemClick {
                     }
                     val today = LocalDate.now()
                     val isDeleted = ev.data.getValue("eventDeleted") as Boolean
-                    if (today.dayOfMonth.toString() == eventDay && !isDeleted) {
+
+                    val userUid =  ev.data.getValue("userUid") as String
+                    if (today.dayOfMonth.toString() == eventDay && !isDeleted &&
+                        currentUserUID == userUid) {
 
                         eventReminders.add(
                             EventReminderResponseFire(
@@ -191,27 +196,44 @@ class EventListFragment : Fragment(), RvEventListAdapter.OnItemClick {
                                 dateFormatted,
                                 ev.data.getValue("eventDeleted") as Boolean,
                                 ev.data.getValue("isToNotify") as Boolean,
-                                ev.data.getValue("eventHour") as String
-                            )
+                                ev.data.getValue("eventHour") as String,
+                                ev.data.getValue("userUid") as String)
                         )
-
                     }
-                    adapter = RvEventListAdapter(context, eventReminders, this)
+                    adapter = RvEventListAdapter(this, eventReminders, this)
                     rvTodoList.adapter = adapter
-                    rvTodoList.layoutManager = LinearLayoutManager(context)
+                    rvTodoList.layoutManager = LinearLayoutManager(this)
                 }
-                activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE);
+                this.window?.clearFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE)
             }
             pbLoadingBar?.visibility = View.INVISIBLE
             llTodoList.isRefreshing = false
         }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
-    }
+    override fun onBackPressed() {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Log out")
+        builder.setMessage("Do you want to log out?")
+        builder.setCancelable(false)
+        builder.setPositiveButton("Yes",
+            DialogInterface.OnClickListener { _: DialogInterface?, _: Int ->
+                val i = Intent(this, RegisterLoginActivity::class.java)
+                startActivity(i)
+                FirebaseAuth.getInstance().signOut()
+                intent.removeExtra(USER_UID)
+                NotificationServiceForeground.stopService(this)
+                finish()
+            } as DialogInterface.OnClickListener)
 
+        builder.setNegativeButton("No",
+            DialogInterface.OnClickListener { dialog: DialogInterface, _: Int ->
+                dialog.cancel()
+            } as DialogInterface.OnClickListener)
+        val alertDialog = builder.create()
+        alertDialog.show()
+
+    }
     override fun onItemClick(position: Int) {
         eventReminders.removeAt(position)
         adapter?.notifyDataSetChanged()
